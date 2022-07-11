@@ -72,14 +72,14 @@ class Shifts2022seg(ClassificationEvaluation):
             file_loader=SimpleITKLoader(),
             validators=(
                 NumberOfCasesValidator(num_cases=25),
-                UniquePathIndicesValidator(),
+                #UniquePathIndicesValidator(),
                 UniqueImagesValidator(),
             ),
         )
-        self._segmentation_path = Path("/input/segmentation/")
-        self._uncertainty_path = Path("/input/uncertainty/")
+        self._segmentation_path = Path("/input/images/white-matter-multiple-sclerosis-lesion-segmentation/")
+        self._uncertainty_path = Path("/input/images/white-matter-multiple-sclerosis-lesion-uncertainty-map/")
 
-        # self.mapping_dict = load_predictions_json(Path("/input/predictions.json"))
+        self.mapping_dict = load_predictions_json(Path("/input/predictions.json"))
 
         self._segmentation_cases = DataFrame()
         self._uncertainty_cases = DataFrame()
@@ -102,7 +102,6 @@ class Shifts2022seg(ClassificationEvaluation):
         if len(np.unique(seg_array)) > 2:
             seg_array = np.zeros_like(seg_array, dtype=int)
 
-
         nDSC = dice_norm_metric(gt_array, seg_array)
         nDSC_AAC = get_nDSC_aac(gt_array.flatten(), seg_array.flatten(), unc_array.flatten())
 
@@ -121,7 +120,7 @@ class Shifts2022seg(ClassificationEvaluation):
         self._segmentation_cases = self._load_cases(folder=self._segmentation_path)
         self._uncertainty_cases = self._load_cases(folder=self._uncertainty_path)
 
-        """
+        
         self._segmentation_cases["ground_truth_path"] = [
             self._ground_truth_path / self.mapping_dict[Path(path).name]
             for path in self._segmentation_cases.path
@@ -141,7 +140,7 @@ class Shifts2022seg(ClassificationEvaluation):
         self._uncertainty_cases = self._uncertainty_cases.sort_values(
             "ground_truth_path"
         ).reset_index(drop=True)
-        """
+        
 
     def validate(self):
         """Validates each dataframe separately"""

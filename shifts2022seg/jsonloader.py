@@ -17,7 +17,7 @@ def load_predictions_json(fname: Path):
         inputs = e["inputs"]
         name = None
         for input in inputs:
-            if input["interface"]["slug"] == "generic-medical-image":
+            if input["interface"]["slug"] == "brain-mri":
                 name = str(input["image"]["name"])
                 break  # expecting only a single input
         if name is None:
@@ -29,11 +29,9 @@ def load_predictions_json(fname: Path):
         outputs = e["outputs"]
 
         for output in outputs:
-            if output["interface"]["slug"] == "generic-medical-image":
-                pk = output["image"]["pk"]
-                if ".mha" not in pk:
-                    pk += ".mha"
-                cases[pk] = name
+            if output["interface"]["slug"] == "white-matter-multiple-sclerosis-lesion-segmentatio" or output["interface"]["slug"] == "white-matter-multiple-sclerosis-lesion-uncertainty":
+                out_name = output["image"]["name"]
+                cases[out_name] = name
 
     return cases
 
