@@ -76,8 +76,8 @@ class Shifts2022seg(ClassificationEvaluation):
                 UniqueImagesValidator(),
             ),
         )
-        self._segmentation_path = Path("/input/images/white-matter-multiple-sclerosis-lesion-segmentation/")
-        self._uncertainty_path = Path("/input/images/white-matter-multiple-sclerosis-lesion-uncertainty-map/")
+        self._relative_segmentation_path = "/output/images/white-matter-multiple-sclerosis-lesion-segmentation/"
+        self._relative_uncertainty_path = "/output/images/white-matter-multiple-sclerosis-lesion-uncertainty-map/"
 
         self.mapping_dict = load_predictions_json(Path("/input/predictions.json"))
 
@@ -114,22 +114,33 @@ class Shifts2022seg(ClassificationEvaluation):
         }
 
 
+    def _load_shuffled_cases(self, rel_path):
+
+        cases = None
+
+        job_pks = self.mapping_dict.keys()
+
+        for pk in job_pks:
+            folder = Path("/inputs/" + pk + rel_path)
+
+            new_cases = self._load_cases(folder=folder)
+            new_cases["ground_truth_path"] = [
+                self._ground_truth_path / self.mapping_dict[pk]
+                for _ in new_cases.path
+            ]
+
+            if cases is None:
+                cases = new_cases
+            else:
+                cases = pd.concat([cases, new_cases])
+            
+        return cases
+
     def load(self):
 
         self._ground_truth_cases = self._load_cases(folder=self._ground_truth_path)
-        self._segmentation_cases = self._load_cases(folder=self._segmentation_path)
-        self._uncertainty_cases = self._load_cases(folder=self._uncertainty_path)
-
-        
-        self._segmentation_cases["ground_truth_path"] = [
-            self._ground_truth_path / self.mapping_dict[Path(path).name]
-            for path in self._segmentation_cases.path
-        ]
-
-        self._uncertainty_cases["ground_truth_path"] = [
-            self._ground_truth_path / self.mapping_dict[Path(path).name]
-            for path in self._uncertainty_cases.path
-        ]
+        self._segmentation_cases = self._load_shuffled_cases(rel_path=self._relative_segmentation_path)
+        self._uncertainty_cases = self._load_shuffled_cases(rel_path=self._relative_uncertainty_path)
 
         self._ground_truth_cases = self._ground_truth_cases.sort_values(
             "path"
@@ -140,7 +151,7 @@ class Shifts2022seg(ClassificationEvaluation):
         self._uncertainty_cases = self._uncertainty_cases.sort_values(
             "ground_truth_path"
         ).reset_index(drop=True)
-        
+
 
     def validate(self):
         """Validates each dataframe separately"""

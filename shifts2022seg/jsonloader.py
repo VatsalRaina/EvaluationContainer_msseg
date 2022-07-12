@@ -13,6 +13,7 @@ def load_predictions_json(fname: Path):
         raise TypeError(f"entries of type float for file: {fname}")
 
     for e in entries:
+        pk = e["pk"]
         # Find case name through input file name
         inputs = e["inputs"]
         name = None
@@ -20,18 +21,8 @@ def load_predictions_json(fname: Path):
             if input["interface"]["slug"] == "brain-mri":
                 name = str(input["image"]["name"])
                 break  # expecting only a single input
-        if name is None:
-            raise ValueError(f"No filename found for entry: {e}")
 
-        entry = {"name": name}
-
-        # Find output value for this case
-        outputs = e["outputs"]
-
-        for output in outputs:
-            if output["interface"]["slug"] == "white-matter-multiple-sclerosis-lesion-segmentatio" or output["interface"]["slug"] == "white-matter-multiple-sclerosis-lesion-uncertainty":
-                out_name = output["image"]["name"]
-                cases[out_name] = name
+        cases[pk] = name
 
     return cases
 
