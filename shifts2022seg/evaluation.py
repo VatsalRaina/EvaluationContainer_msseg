@@ -121,7 +121,7 @@ class Shifts2022seg(ClassificationEvaluation):
         job_pks = self.mapping_dict.keys()
 
         for pk in job_pks:
-            folder = Path("/inputs/" + pk + rel_path)
+            folder = Path("/input/" + pk + rel_path)
 
             new_cases = self._load_cases(folder=folder)
             new_cases["ground_truth_path"] = [
