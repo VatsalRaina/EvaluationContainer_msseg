@@ -17,6 +17,7 @@ RUN python -m pip install --user -U pip
 
 
 COPY --chown=evaluator:evaluator ground-truth /opt/evaluation/ground-truth
+COPY --chown=evaluator:evaluator brain-mask /opt/evaluation/brain-mask
 
 COPY --chown=evaluator:evaluator requirements.txt /opt/evaluation/
 RUN python -m pip install --user -rrequirements.txt

@@ -76,6 +76,7 @@ class Shifts2022seg(ClassificationEvaluation):
                 UniqueImagesValidator(),
             ),
         )
+        self._mask_path = Path("/opt/evaluation/brain-mask/")
         self._relative_segmentation_path = "/output/images/white-matter-multiple-sclerosis-lesion-segmentation/"
         self._relative_uncertainty_path = "/output/images/white-matter-multiple-sclerosis-lesion-uncertainty-map/"
 
@@ -88,22 +89,25 @@ class Shifts2022seg(ClassificationEvaluation):
         gt_path = case["path_ground_truth"]
         segmentation_path = case["path_segmentation"]
         uncertainty_path = case["path_uncertainty"]
+        mask_path = case["path_mask"]
 
         # Load the images for this case
         gt = self._file_loader.load_image(gt_path)
         seg = self._file_loader.load_image(segmentation_path)
         unc = self._file_loader.load_image(uncertainty_path)
+        mask = self._file_loader.load_image(mask_path)
 
         gt_array = SimpleITK.GetArrayFromImage(gt)
         seg_array = SimpleITK.GetArrayFromImage(seg)
         unc_array = SimpleITK.GetArrayFromImage(unc)
+        mask_array = SimpleITK.GetArrayFromImage(mask)
 
         # Checks to ensure that the predictions are binary - if not, prediction is punished
         if len(np.unique(seg_array)) > 2:
             seg_array = np.zeros_like(seg_array, dtype=int)
 
         nDSC = dice_norm_metric(gt_array, seg_array)
-        nDSC_AAC = get_nDSC_aac(gt_array.flatten(), seg_array.flatten(), unc_array.flatten())
+        nDSC_AAC = get_nDSC_aac(gt_array[mask==1].flatten(), seg_array[mask==1].flatten(), unc_array[mask==1].flatten())
 
         return {
             'nDSC': nDSC,
@@ -139,10 +143,14 @@ class Shifts2022seg(ClassificationEvaluation):
     def load(self):
 
         self._ground_truth_cases = self._load_cases(folder=self._ground_truth_path)
+        self._mask_cases = self._load_cases(folder=self._mask_path)
         self._segmentation_cases = self._load_shuffled_cases(rel_path=self._relative_segmentation_path)
         self._uncertainty_cases = self._load_shuffled_cases(rel_path=self._relative_uncertainty_path)
 
         self._ground_truth_cases = self._ground_truth_cases.sort_values(
+            "path"
+        ).reset_index(drop=True)
+        self._mask_cases = self._mask_cases.sort_values(
             "path"
         ).reset_index(drop=True)
         self._segmentation_cases = self._segmentation_cases.sort_values(
@@ -165,8 +173,8 @@ class Shifts2022seg(ClassificationEvaluation):
             temp = reduce(lambda left, right: pd.merge(left, right, left_index=True, right_index=True, how="outer"), dfList)
             return temp
 
-        dfs = {0: self._ground_truth_cases, 1: self._segmentation_cases, 2: self._uncertainty_cases}
-        suffixes = ("_ground_truth", "_segmentation", "_uncertainty")
+        dfs = {0: self._ground_truth_cases, 1: self._segmentation_cases, 2: self._uncertainty_cases, 3: self._mask_cases}
+        suffixes = ("_ground_truth", "_segmentation", "_uncertainty", "_mask")
         for i in dfs:
             dfs[i] = dfs[i].add_suffix(suffixes[i])
         self._cases = agg_df(dfs.values())
