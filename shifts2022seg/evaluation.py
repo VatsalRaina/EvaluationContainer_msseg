@@ -102,12 +102,13 @@ class Shifts2022seg(ClassificationEvaluation):
         unc_array = SimpleITK.GetArrayFromImage(unc)
         mask_array = SimpleITK.GetArrayFromImage(mask)
 
+
         # Checks to ensure that the predictions are binary - if not, prediction is punished
         if len(np.unique(seg_array)) > 2:
             seg_array = np.zeros_like(seg_array, dtype=int)
 
         nDSC = dice_norm_metric(gt_array, seg_array)
-        nDSC_AAC = get_nDSC_aac(gt_array[mask==1].flatten(), seg_array[mask==1].flatten(), unc_array[mask==1].flatten())
+        nDSC_AAC = get_nDSC_aac(gt_array[mask_array==1].flatten(), seg_array[mask_array==1].flatten(), unc_array[mask_array==1].flatten())
 
         return {
             'nDSC': nDSC,
