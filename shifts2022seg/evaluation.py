@@ -97,10 +97,10 @@ class Shifts2022seg(ClassificationEvaluation):
         unc = self._file_loader.load_image(uncertainty_path)
         mask = self._file_loader.load_image(mask_path)
 
-        gt_array = SimpleITK.GetArrayFromImage(gt)
+        gt_array = np.transpose(SimpleITK.GetArrayFromImage(gt))
         seg_array = SimpleITK.GetArrayFromImage(seg)
         unc_array = SimpleITK.GetArrayFromImage(unc)
-        mask_array = SimpleITK.GetArrayFromImage(mask)
+        mask_array = np.transpose(SimpleITK.GetArrayFromImage(mask))
 
 
         # Checks to ensure that the predictions are binary - if not, prediction is punished
